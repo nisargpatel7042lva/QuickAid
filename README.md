@@ -2,7 +2,7 @@
 
 **Instant first-aid guidance when every second counts.**
 
-![QuickAid Banner](https://via.placeholder.com/1000x400?text=QuickAid+-+AI+First+Aid+Assistant)
+![QuickAid Banner]([https://via.placeholder.com/1000x400?text=QuickAid+-+AI+First+Aid+Assistant](https://drive.google.com/file/d/1wHLeg1SKwohAlP6isQ7s93zcf3eXBD76/view?usp=sharing))
 
 ## 🏥 About QuickAid
 QuickAid is a voice-activated AI-powered **first-aid assistant** that provides **step-by-step emergency instructions** based on user input. Whether it’s choking, burns, fractures, or CPR, QuickAid delivers **instant, life-saving guidance** before medical help arrives.
