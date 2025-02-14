@@ -16,7 +16,7 @@ QuickAid is a voice-activated AI-powered **first-aid assistant** that provides *
 ---
 
 ## 🚀 Live Demo  
-🔗 [**QuickAid Live Demo**](#) *(Add your deployment link here!)*  
+🔗 [**QuickAid Live Demo**](#) *(https://quick-aid.vercel.app/)*  
 
 ---
 
