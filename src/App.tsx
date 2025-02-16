@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Mic, Phone, Type, Volume2, Package, ChevronDown, HeartPulse as Pulse } from 'lucide-react';
 import 'regenerator-runtime/runtime';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -199,6 +199,29 @@ function App() {
       "Stay calm and reassuring",
       "Ground them by describing surroundings",
       "Seek medical help if symptoms persist"
+    ],
+    heartPalpitations: [
+      "Encourage the person to sit down and relax",
+      "Help them take slow, deep breaths",
+      "Avoid caffeine or stimulants",
+      "If pain or dizziness occurs, call emergency services"
+    ],
+    fainting: [
+      "Lay the person down and elevate their legs",
+      "Loosen tight clothing",
+      "Check for breathing and consciousness",
+      "If unconscious for more than a minute, call emergency services"
+    ],
+    appendicitis: [
+      "Look for severe pain in the lower right abdomen",
+      "Avoid giving the person food or drink",
+      "Seek immediate medical attention"
+    ],
+    insectBiteAllergy: [
+      "Move away from the insect source",
+      "Apply a cold pack to reduce swelling",
+      "Use an EpiPen if the person has a severe allergic reaction",
+      "Call emergency services if breathing difficulty occurs"
     ]
   };
 
