@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Heart, Mic, Phone, Type, Volume2, Package, ChevronDown, Youtube, PlayCircle, AlertCircle } from 'lucide-react';
+import { Heart, Mic, Phone, Type, Package, ChevronDown, PlayCircle, AlertCircle } from 'lucide-react';
 import 'regenerator-runtime/runtime';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import Fuse from 'fuse.js';
