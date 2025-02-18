@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google-cloud/translate": "^8.0.2",
+    "fuse.js": "^7.0.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -19,9 +20,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@types/react-speech-recognition": "^3.9.6",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
     "@types/regenerator-runtime": "^0.13.5",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",

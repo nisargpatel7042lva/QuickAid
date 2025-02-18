@@ -1,16 +1,44 @@
-import { useState, useEffect } from 'react';
-import { Heart, Mic, Phone, Type, Volume2, Package, ChevronDown, HeartPulse as Pulse } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Heart, Mic, Phone, Type, Volume2, Package, ChevronDown, Youtube, PlayCircle, AlertCircle } from 'lucide-react';
 import 'regenerator-runtime/runtime';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import Fuse from 'fuse.js';
 
 function App() {
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [showFirstAidKit, setShowFirstAidKit] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const { transcript, resetTranscript } = useSpeechRecognition();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fuseRef = useRef<Fuse<string>>();
+
+  const emergencyVideos = {
+    choking: "https://www.youtube.com/watch?v=PA9hpOnvtCk",
+    bleeding: "https://www.youtube.com/watch?v=NxO5LvgqZe0",
+    burns: "https://www.youtube.com/watch?v=EaJmzB8YgS0",
+    fracture: "https://www.youtube.com/watch?v=PnZgZK3T4Bk",
+    heartAttack: "https://www.youtube.com/watch?v=gDwt7dD3awc",
+    snakeBite: "https://www.youtube.com/watch?v=O4KkwuL9JJw",
+    heatstroke: "https://www.youtube.com/watch?v=vON9sC6Fgb0",
+    seizure: "https://www.youtube.com/watch?v=ZPls_oCE-QE",
+    drowning: "https://www.youtube.com/watch?v=GJxiIPXlOlE",
+    poisoning: "https://www.youtube.com/watch?v=KHU9bNS7q6c",
+    electricShock: "https://www.youtube.com/watch?v=hLJJvmX0YZ0",
+    allergicReaction: "https://www.youtube.com/watch?v=v7J9bfqhRBk",
+    nosebleed: "https://www.youtube.com/watch?v=MmQWR_qIXhc",
+    sprain: "https://www.youtube.com/watch?v=gNn6Xm5iK0Q",
+    eyeInjury: "https://www.youtube.com/watch?v=AdRHG-Z_hXw",
+    diabeticEmergency: "https://www.youtube.com/watch?v=TL8A4HtREWo",
+    concussion: "https://www.youtube.com/watch?v=RH3YxAYJBk4",
+    asthmaAttack: "https://www.youtube.com/watch?v=JE7ZtRTEP64",
+    toothache: "https://www.youtube.com/watch?v=8YwXJR-9KRs",
+    hypothermia: "https://www.youtube.com/watch?v=Kk7LBe3_dLU",
+    panic: "https://www.youtube.com/watch?v=8LdVw7JxqPE"
+  };
 
   const emergencyInstructions = {
-
     choking: [
       "Stand behind the person and lean them forward slightly",
       "Give 5 sharp blows between their shoulder blades",
@@ -277,17 +305,61 @@ function App() {
   };
 
   useEffect(() => {
+    const searchOptions = {
+      includeScore: true,
+      threshold: 0.4,
+      keys: ['name']
+    };
+
+    const searchItems = Object.keys(emergencyInstructions).map(key => ({
+      name: key.toLowerCase().replace(/([A-Z])/g, ' $1').trim()
+    }));
+
+    fuseRef.current = new Fuse(searchItems, searchOptions);
+  }, []);
+
+  useEffect(() => {
     if (transcript) {
       setInputText(transcript);
+      SpeechRecognition.stopListening();
+      setIsListening(false);
     }
   }, [transcript]);
+
+  useEffect(() => {
+    if (inputText.length > 0 && fuseRef.current) {
+      const results = fuseRef.current.search(inputText.toLowerCase());
+      
+      const filteredSuggestions = results.map(result => 
+        Object.keys(emergencyInstructions).find(key => 
+          key.toLowerCase().replace(/([A-Z])/g, ' $1').trim() === result.item.name
+        )
+      ).filter((key): key is string => key !== undefined);
+
+      setSuggestions(filteredSuggestions);
+      setShowSuggestions(filteredSuggestions.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [inputText]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleMicClick = () => {
     if (isListening) {
       SpeechRecognition.stopListening();
     } else {
       resetTranscript();
-      SpeechRecognition.startListening({ continuous: true });
+      SpeechRecognition.startListening({ continuous: false });
     }
     setIsListening(!isListening);
   };
@@ -296,111 +368,172 @@ function App() {
     window.location.href = 'tel:108';
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputText(suggestion);
+    setShowSuggestions(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   const getInstructions = (input: string) => {
-    const lowercaseInput = input.toLowerCase();
-    if (lowercaseInput.includes('chok')) return emergencyInstructions.choking;
-    if (lowercaseInput.includes('bleed')) return emergencyInstructions.bleeding;
-    if (lowercaseInput.includes('burn')) return emergencyInstructions.burns;
-    if (lowercaseInput.includes('fracture')) return emergencyInstructions.fracture;
-    if (lowercaseInput.includes('heart') || lowercaseInput.includes('chest pain')) return emergencyInstructions.heartAttack;
-    if (lowercaseInput.includes('snake')) return emergencyInstructions.snakeBite;
-    if (lowercaseInput.includes('heat') || lowercaseInput.includes('stroke')) return emergencyInstructions.heatstroke;
-    if (lowercaseInput.includes('seizure')) return emergencyInstructions.seizure;
-    if (lowercaseInput.includes('drown')) return emergencyInstructions.drowning;
-    if (lowercaseInput.includes('poison')) return emergencyInstructions.poisoning;
-    if (lowercaseInput.includes('electric')) return emergencyInstructions.electricShock;
-    if (lowercaseInput.includes('allerg')) return emergencyInstructions.allergicReaction;
-    if (lowercaseInput.includes('nose') && lowercaseInput.includes('bleed')) return emergencyInstructions.nosebleed;
-    if (lowercaseInput.includes('sprain')) return emergencyInstructions.sprain;
-    if (lowercaseInput.includes('eye')) return emergencyInstructions.eyeInjury;
-    if (lowercaseInput.includes('diabet')) return emergencyInstructions.diabeticEmergency;
-    if (lowercaseInput.includes('concuss')) return emergencyInstructions.concussion;
-    if (lowercaseInput.includes('asthma')) return emergencyInstructions.asthmaAttack;
-    if (lowercaseInput.includes('tooth')) return emergencyInstructions.toothache;
-    if (lowercaseInput.includes('hypothermia')) return emergencyInstructions.hypothermia;
-    if (lowercaseInput.includes('panic')) return emergencyInstructions.panic;
-    return ["Please describe the emergency situation clearly (e.g., 'choking', 'bleeding', 'burn', 'fracture', 'heart attack', 'snake bite', 'drowning', 'poisoning', 'electric shock', 'allergic reaction', etc.)"];
+    if (!input) return { instructions: [], videoUrl: null };
+
+    const normalizedInput = input.toLowerCase();
+
+    if (fuseRef.current) {
+      const results = fuseRef.current.search(normalizedInput);
+      if (results.length > 0) {
+        const matchedKey = Object.keys(emergencyInstructions).find(key => 
+          key.toLowerCase().replace(/([A-Z])/g, ' $1').trim() === results[0].item.name
+        );
+
+        if (matchedKey) {
+          return {
+            instructions: emergencyInstructions[matchedKey],
+            videoUrl: emergencyVideos[matchedKey]
+          };
+        }
+      }
+    }
+
+    return { 
+      instructions: ["Please describe the emergency situation clearly (e.g., 'choking', 'bleeding', 'burn', etc.)"],
+      videoUrl: null 
+    };
+  };
+
+  const { instructions, videoUrl } = getInstructions(inputText);
+
+  const formatSuggestionText = (text: string) => {
+    return text.replace(/([A-Z])/g, ' $1').trim();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100">
-      <header className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-red-100 to-red-50">
+      <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-red-100">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Heart className="h-8 w-8 text-red-500" />
-              <h1 className="text-2xl font-bold text-gray-800">QuickAid</h1>
+            <div className="flex items-center space-x-3">
+              <div className="bg-red-500 p-2 rounded-lg shadow-md">
+                <Heart className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-800">QuickAid</h1>
             </div>
             <button
-              onClick={() => handleEmergencyCall()}
-              className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              onClick={handleEmergencyCall}
+              className="flex items-center space-x-2 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all transform hover:scale-105 shadow-md"
             >
               <Phone className="h-5 w-5" />
-              <span>Emergency Call (108)</span>
+              <span className="font-semibold">Emergency (108)</span>
             </button>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <div className="flex items-center space-x-4 mb-6">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">What's the Emergency?</h2>
+            <div className="flex items-center space-x-4">
               <button
                 onClick={handleMicClick}
-                className={`p-4 rounded-full ${
-                  isListening ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600'
-                } hover:bg-red-600 hover:text-white transition-colors`}
+                className={`p-4 rounded-xl ${
+                  isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 text-gray-600'
+                } hover:bg-red-600 hover:text-white transition-all transform hover:scale-105 shadow-md`}
               >
                 <Mic className="h-6 w-6" />
               </button>
-              <div className="flex-1">
+              <div className="flex-1 relative" ref={inputRef}>
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Describe the emergency situation..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm text-lg"
                 />
-              </div>
-              <Type className="h-6 w-6 text-gray-400" />
-            </div>
-
-            <div className="space-y-4">
-              {getInstructions(inputText).map((instruction, index) => (
-                <div
-                  key={index}
-                  className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center">
-                    {index + 1}
+                <Type className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
+                
+                {showSuggestions && (
+                  <div className="absolute w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full px-6 py-3 text-left hover:bg-red-50 transition-colors text-gray-700 flex items-center space-x-2"
+                      >
+                        <Type className="h-4 w-4 text-red-500" />
+                        <span>{formatSuggestionText(suggestion)}</span>
+                      </button>
+                    ))}
                   </div>
-                  <p className="flex-1 text-gray-700">{instruction}</p>
-                  <Volume2 className="h-5 w-5 text-gray-400 cursor-pointer hover:text-red-500" />
-                </div>
-              ))}
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          {inputText && (
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Emergency Instructions</h2>
+                {videoUrl && (
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all transform hover:scale-105 shadow-md"
+                  >
+                    <PlayCircle className="h-5 w-5" />
+                    <span>Watch Tutorial</span>
+                  </a>
+                )}
+              </div>
+              <div className="space-y-4">
+                {instructions.map((instruction, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-4 p-6 bg-gradient-to-r from-red-50 to-white rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-gray-700 text-lg leading-relaxed">{instruction}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
             <button
               onClick={() => setShowFirstAidKit(!showFirstAidKit)}
-              className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-50 to-white rounded-xl hover:from-red-100 transition-all shadow-sm"
             >
-              <div className="flex items-center space-x-2">
-                <Package className="h-5 w-5 text-red-500" />
-                <span className="font-semibold text-gray-700">First Aid Kit Guide</span>
+              <div className="flex items-center space-x-3">
+                <div className="bg-red-500 p-2 rounded-lg shadow-sm">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-xl font-bold text-gray-800">First Aid Kit Guide</span>
               </div>
-              <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform ${showFirstAidKit ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-6 w-6 text-gray-500 transform transition-transform ${showFirstAidKit ? 'rotate-180' : ''}`} />
             </button>
             
             {showFirstAidKit && (
-              <div className="mt-4 space-y-4">
+              <div className="mt-6 grid gap-6 md:grid-cols-2">
                 {Object.entries(firstAidKit).map(([item, info]) => (
-                  <div key={item} className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">{item}</h3>
-                    <p className="text-gray-600 mb-2">{info.description}</p>
-                    <p className="text-gray-700 text-sm"><strong>How to use:</strong> {info.usage}</p>
+                  <div key={item} className="p-6 bg-gradient-to-r from-red-50 to-white rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-all">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center space-x-2">
+                      <AlertCircle className="h-5 w-5 text-red-500" />
+                      <span>{item}</span>
+                    </h3>
+                    <div className="space-y-3 text-gray-600">
+                      <p className="font-medium">{info.description}</p>
+                      <p className="text-sm border-t border-red-100 pt-2">
+                        <strong className="text-red-500">Usage:</strong> {info.usage}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
