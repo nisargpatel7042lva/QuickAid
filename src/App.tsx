@@ -390,8 +390,8 @@ function App() {
 
         if (matchedKey) {
           return {
-            instructions: emergencyInstructions[matchedKey],
-            videoUrl: emergencyVideos[matchedKey]
+            instructions: emergencyInstructions[matchedKey as keyof typeof emergencyInstructions],
+            videoUrl: emergencyVideos[matchedKey as keyof typeof emergencyVideos]
           };
         }
       }
@@ -489,7 +489,7 @@ function App() {
                 )}
               </div>
               <div className="space-y-4">
-                {instructions.map((instruction, index) => (
+                {instructions.map((instruction: string, index: number) => (
                   <div
                     key={index}
                     className="flex items-start space-x-4 p-6 bg-gradient-to-r from-red-50 to-white rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-all"
